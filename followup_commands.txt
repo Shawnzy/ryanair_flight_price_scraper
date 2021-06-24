@@ -1,0 +1,54 @@
+# Lista de comandos para acompanhar a execução dos crawlers
+# Eu costumo dividir a tela em 8 (2 colunas e 4 linhas) com o tmux.
+# Na notação <coluna>.<linha>, eu deixo os seguintes comandos rodando
+
+# Vendo o uso de memória da máquina
+1.1 htop
+
+# Comando para acompanhar o uso de rede da máquina
+1.2 nload device ens3 -m
+
+# Esse comando acompanha em tempo real a execução os crawlers,
+# e também sua evolução ("unfinished tasks")
+# O principal ponto é ver se os crawlers estão retornando resultados
+# em uma taxa aceitável ("mean result rate" e "recent result rate") ~ 0.7
+# O que significa que estão obtendo 0.7 resultados por segundo.
+# "mean result rate" é a taxa média desde o início da execução do crawler.
+# "recent result rate" é a taxa média no último minuto
+ o início da execução do crawler.
+1.3 cd ~/crawlers/scripts/viagens/ryanair/log/log_files && \
+    tail -f ryanair_info.log{'','.1','.2'} | egrep 'Main|unf|defe'
+
+# Esse comando monitora a "saúde" o banco de proxies.
+# Ele retorna um head e um tail da tabela de proxies.
+# Ele também retorna um sumário com:
+# Número de proxies usáveis (1) e não usáveis (0). Idealmente o número de proxies usáveis "livres" deve se manter > 300
+# Tempo máximo esperando retest: Proxies há mais tempo não retestadas.
+# Tempo mínimo de reuso de proxy: Intervalo para reutilização de proxies. Idealmente esse número seria > 5 minutos. Mas nem sempre é possível.
+1.4 crawlers_env && cd ~/crawlers/scripts/viagens/ryanair/db && python proxy_db_monitor.py
+
+# Comando que faz um resumo dos arquivos gerados
+2.1 crawlers_env && cd ~/crawlers/scripts/viagens/ryanair && python ryan_results.py
+
+2.2 echo "livre"
+
+# Analisa o log dos crawlers e calcula o tempo médio de execução de um crawler
+2.3 crawlers_env && cd ~/crawlers/scripts/viagens/ryanair/log && python analyzeLog.py
+
+# [IMPORTANTE] Script que fica retestando as proxies que foram tageadas como "não utilizáveis"
+# Esse script é muito importante pq ele "revive" as proxies que não estão sendo utilizadas
+# porque não retornanram o resultado esperado uma vez
+# [UPDATE] Este script está no crontab também, duas vezes por dia
+#2.4 crawlers_env && cd ~/crawlers/scripts/viagens/ryanair/db && python retest_proxies.py -w 200
+
+# Para inserir novas proxies no banco de dados:
+# <proxydb_list.dat> é o arquivo de input, com as proxies a serem testadas.
+# Veja o arquivo para entender o formato, mas é basicamente:
+# uma proxy por linha, no formato <ip>:<port>. Exemplo: 192.168.0.1:8080
+# Sem header no arquivo!
+# O script a seguir processa esse arquivo, verifica se cada
+# proxy já está no banco de proxies, e insere ou atualiza seu status
+# Status "useable=True" significa que a proxy pode ser utilizada no site
+# da ryanair.
+$ crawlers_env && cd ~/crawlers/scripts/viagens/ryanair/db && python test_proxies.py proxydb_list.dat -w 100
+
