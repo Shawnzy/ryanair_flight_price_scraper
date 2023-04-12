@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-"""
-Coleta dados dos voos anunciados na ryanair.com
-
-#[PRECISA DOCUMENTAR] Documentacao em: "https://basecamp.com/2229872/projects/4012037/documents/11933404".
-"""
 
 import pandas as pd
 import numpy as np
@@ -149,7 +144,7 @@ def worker(queue, outf, defect_queue, nome):
         while not queue.empty():
             tup = queue.get()
             nome = outf.split('/')[-1].split('.')[0]
-            print 'nome:', nome
+            print(f'nome: {nome}')
             logger.debug('Job: %s' % str(tup))
             resp = parseFlight(tup, outf)
             queue.task_done()
